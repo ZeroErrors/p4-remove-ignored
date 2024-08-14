@@ -1,8 +1,6 @@
 use std::{path::Path, time::Instant};
 
 use clap::Parser;
-use p4::ignores;
-use walkdir::WalkDir;
 
 mod p4;
 
@@ -23,6 +21,9 @@ struct Args {
 
     #[arg(short, long)]
     dry_run: bool,
+
+    #[arg(short, long)]
+    keep_files: bool,
 
     /// The depot paths to remove ignored files from
     #[arg(required = true)]
@@ -52,6 +53,9 @@ fn main() {
 
     let args = Args::parse();
     let p4_options = args.to_p4_options();
+
+    println!("Dry run: {}", args.dry_run);
+    println!("Keep files: {}", args.keep_files);
 
     println!("Finding ignored files in paths: {:?}", args.depot_paths);
 
@@ -106,7 +110,11 @@ fn main() {
     } else {
         println!("Deleting files...");
         let start_time = Instant::now();
-        p4::run_batched(|args| p4::delete::run(&p4_options, args), &ignored_files);
+        let keep_files = args.keep_files;
+        p4::run_batched(
+            |args| p4::delete::run(&p4_options, keep_files, args),
+            &ignored_files,
+        );
         println!(
             "Deleted {} files in {} seconds.",
             ignored_files.len(),

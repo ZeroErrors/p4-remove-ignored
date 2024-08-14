@@ -22,13 +22,19 @@ where
 
     for arg in args {
         let arg_size = arg.as_ref().len();
-        if batch_size + arg_size > 1024 {
+        const WINDOWS_MAX_ARG_SIZE: usize = 32768;
+        const MAX_COMMAND_SIZE: usize = 1024; // Our maximum command size without arguments
+        if batch_size + arg_size > WINDOWS_MAX_ARG_SIZE - MAX_COMMAND_SIZE {
             batches.push(std::mem::take(&mut batch));
             batch_size = 0;
         }
 
         batch.push(arg);
         batch_size += arg_size;
+    }
+    // Add the remaining batch
+    if !batch.is_empty() {
+        batches.push(std::mem::take(&mut batch));
     }
 
     println!("Running {} batches", batches.len());

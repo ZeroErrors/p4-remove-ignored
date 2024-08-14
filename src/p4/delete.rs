@@ -15,19 +15,24 @@ pub struct Output {
 }
 
 /// Runs `p4 -Mj -z tag delete -k <path...>`
-pub fn run<I, S>(options: &super::Options, paths: I) -> Vec<Output>
+pub fn run<I, S>(options: &super::Options, keep_files: bool, paths: I) -> Vec<Output>
 where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
 {
-    let output = Command::new("p4")
+    let mut command = Command::new("p4");
+    command
         .arg("-p")
         .arg(&options.port)
         .arg("-u")
         .arg(&options.user)
         .arg("-c")
         .arg(&options.client)
-        .args(["-Mj", "-z", "tag", "delete", "-k"])
+        .args(["-Mj", "-z", "tag", "delete"]);
+    if keep_files {
+        command.arg("-k");
+    }
+    let output = command
         .args(paths)
         .output() // TODO: Stream the output to reduce the amount of buffering
         .expect("Failed to run p4 delete");
