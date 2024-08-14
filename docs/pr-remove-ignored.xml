@@ -17,5 +17,6 @@
    <CloseOnExit>false</CloseOnExit>
   </Console>
   <AddToContext>true</AddToContext>
+  <Refresh>true</Refresh>
  </CustomToolDef>
 </CustomToolDefList>
