@@ -59,33 +59,13 @@ fn main() {
 
     println!("Finding files in workspace...");
     let start_time = Instant::now();
-    // let workspace_paths =
-    //     p4::run_batched(|args| p4::fstat::run_clientfile(&p4_options, args), args.depot_paths)
-    //         .iter()
-    //         .map(|output| output.client_file.clone())
-    //         .collect::<Vec<_>>();
-
-    // Recursively find all files in the given paths
-    let workspace_paths = args
-        .depot_paths
-        .iter()
-        // Map the depot paths to workspace paths
-        .map(|path| p4::where_::run(&p4_options, [path])[0].path.to_string())
-        .flat_map(|path| {
-            let mut path = Path::new(&path);
-
-            // Perforce returns direcotry paths with "..." at the end, so we need to strip it
-            if path.ends_with("...") {
-                path = path.parent().unwrap();
-            }
-
-            WalkDir::new(path)
-                .into_iter()
-                .filter_map(|e| e.ok())
-                .filter(|e| e.file_type().is_file())
-                .map(|e| e.into_path())
-        })
-        .collect::<Vec<_>>();
+    let workspace_paths = p4::run_batched(
+        |args| p4::fstat::run_clientfile(&p4_options, args),
+        args.depot_paths,
+    )
+    .iter()
+    .map(|output| output.client_file.clone())
+    .collect::<Vec<_>>();
     println!(
         "Found {} files in {} seconds.",
         workspace_paths.len(),
@@ -96,7 +76,10 @@ fn main() {
     let working_directory = std::env::current_dir().unwrap();
     let workspace_paths = workspace_paths
         .iter()
-        .map(|path| path.strip_prefix(&working_directory).unwrap_or(path))
+        .map(|path| {
+            let path = Path::new(path);
+            path.strip_prefix(&working_directory).unwrap_or(path)
+        })
         .collect::<Vec<_>>();
 
     // TODO: Instead of running `p4 ignores -i` for all the files run `p4 ignores` to get the ignore rules and then match the files against the rules

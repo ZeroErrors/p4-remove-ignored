@@ -1,6 +1,6 @@
 [package]
 name = "p4-remove-ignored"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = ["Zero <nick@zero.dev>"]
 description = "Remove files from a perforce depot that should be ignored by P4IGNORE."
