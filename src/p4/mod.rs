@@ -49,5 +49,6 @@ where
 
 pub mod delete;
 pub mod files;
+pub mod fstat;
 pub mod ignores;
 pub mod where_;

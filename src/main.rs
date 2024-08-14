@@ -1,6 +1,8 @@
-use std::time::Instant;
+use std::{path::Path, time::Instant};
 
 use clap::Parser;
+use p4::ignores;
+use walkdir::WalkDir;
 
 mod p4;
 
@@ -51,34 +53,54 @@ fn main() {
     let args = Args::parse();
     let p4_options = args.to_p4_options();
 
-    println!(
-        "Finding ignored files in depot paths: {:?}",
-        args.depot_paths
-    );
+    println!("Finding ignored files in paths: {:?}", args.depot_paths);
 
-    // - Run `p4 -Mj -z tag files -e <depot-path>` to find all files recurisvly for each depot path provided
-    println!("Finding files in depot paths...");
+    // TODO: Run `p4 -Mj -z tag fstat -Rc -T clientFile <paths...>` to get all the files in the workspace
+
+    println!("Finding files in workspace...");
     let start_time = Instant::now();
-    let depot_paths = args
+    // let workspace_paths =
+    //     p4::run_batched(|args| p4::fstat::run_clientfile(&p4_options, args), args.depot_paths)
+    //         .iter()
+    //         .map(|output| output.client_file.clone())
+    //         .collect::<Vec<_>>();
+
+    // Recursively find all files in the given paths
+    let workspace_paths = args
         .depot_paths
         .iter()
-        .flat_map(|path| p4::files::run(&p4_options, path))
-        .map(|file| file.depot_file)
+        // Map the depot paths to workspace paths
+        .map(|path| p4::where_::run(&p4_options, [path])[0].path.to_string())
+        .flat_map(|path| {
+            let mut path = Path::new(&path);
+
+            // Perforce returns direcotry paths with "..." at the end, so we need to strip it
+            if path.ends_with("...") {
+                path = path.parent().unwrap();
+            }
+
+            WalkDir::new(path)
+                .into_iter()
+                .filter_map(|e| e.ok())
+                .filter(|e| e.file_type().is_file())
+                .map(|e| e.into_path())
+        })
         .collect::<Vec<_>>();
     println!(
         "Found {} files in {} seconds.",
-        depot_paths.len(),
+        workspace_paths.len(),
         start_time.elapsed().as_secs_f32()
     );
 
-    // - Run `p4 -Mj -z tag where <file...>` to transform from depot paths to workspace paths
-    println!("Mapping workspace paths...");
-    let start_time = Instant::now();
-    let workspace_paths = p4::run_batched(|args| p4::where_::run(&p4_options, args), depot_paths)
+    // Trim workspace paths to be relative to the workspace root so the paths are shorter and we need less batched commands
+    let working_directory = std::env::current_dir().unwrap();
+    let workspace_paths = workspace_paths
         .iter()
-        .map(|file| file.path.to_string())
+        .map(|path| path.strip_prefix(&working_directory).unwrap_or(path))
         .collect::<Vec<_>>();
-    println!("Took {} seconds.", start_time.elapsed().as_secs_f32());
+
+    // TODO: Instead of running `p4 ignores -i` for all the files run `p4 ignores` to get the ignore rules and then match the files against the rules
+    // p4:ignores::get_ignore_mappings(options).iter().map(|line| line.replace("...", "**"))
 
     // - Run `p4 -Mj -z tag ignores -i <path...>` to find ignored files
     println!("Finding ignored files...");
@@ -101,7 +123,7 @@ fn main() {
     } else {
         println!("Deleting files...");
         let start_time = Instant::now();
-        p4::delete::run(&p4_options, &ignored_files);
+        p4::run_batched(|args| p4::delete::run(&p4_options, args), &ignored_files);
         println!(
             "Deleted {} files in {} seconds.",
             ignored_files.len(),
