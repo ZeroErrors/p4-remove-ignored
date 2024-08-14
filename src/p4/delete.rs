@@ -21,14 +21,8 @@ where
     S: AsRef<OsStr>,
 {
     let mut command = Command::new("p4");
-    command
-        .arg("-p")
-        .arg(&options.port)
-        .arg("-u")
-        .arg(&options.user)
-        .arg("-c")
-        .arg(&options.client)
-        .args(["-Mj", "-z", "tag", "delete"]);
+    options.append_args(&mut command);
+    command.args(["-Mj", "-z", "tag", "delete"]);
     if keep_files {
         command.arg("-k");
     }

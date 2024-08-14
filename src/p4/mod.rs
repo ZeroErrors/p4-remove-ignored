@@ -3,9 +3,23 @@ use std::{ffi::OsStr, io::BufRead};
 use rayon::prelude::*;
 
 pub struct Options {
-    pub port: String,
-    pub user: String,
-    pub client: String,
+    pub port: Option<String>,
+    pub user: Option<String>,
+    pub client: Option<String>,
+}
+
+impl Options {
+    pub fn append_args(&self, command: &mut std::process::Command) {
+        if let Some(port) = &self.port {
+            command.arg("-p").arg(port);
+        }
+        if let Some(user) = &self.user {
+            command.arg("-u").arg(user);
+        }
+        if let Some(client) = &self.client {
+            command.arg("-c").arg(client);
+        }
+    }
 }
 
 /// Run a command in batches to avoid the maximum command line length

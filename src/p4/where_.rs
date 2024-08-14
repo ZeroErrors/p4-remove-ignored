@@ -17,13 +17,9 @@ where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
 {
-    let output = Command::new("p4")
-        .arg("-p")
-        .arg(&options.port)
-        .arg("-u")
-        .arg(&options.user)
-        .arg("-c")
-        .arg(&options.client)
+    let mut command = Command::new("p4");
+    options.append_args(&mut command);
+    let output = command
         .args(["-Mj", "-z", "tag", "where"])
         .args(paths)
         .output() // TODO: Stream the output to reduce the amount of buffering

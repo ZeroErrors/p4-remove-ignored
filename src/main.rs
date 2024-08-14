@@ -9,15 +9,15 @@ mod p4;
 struct Args {
     /// The Perforce port to connect to
     #[arg(short, long)]
-    port: String,
+    port: Option<String>,
 
     /// The Perforce user to connect as
     #[arg(short, long)]
-    user: String,
+    user: Option<String>,
 
-    /// The Perforce client to use
+    /// The Perforce client workspace to use
     #[arg(short, long)]
-    client: String,
+    client: Option<String>,
 
     #[arg(short, long)]
     dry_run: bool,

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--perforce-xml-version=1.0-->
+<CustomToolDefList varName="customtooldeflist">
+ <CustomToolDef>
+  <Definition>
+   <Name>Remove Ignored</Name>
+   <Command>p4-remove-ignored.exe</Command>
+   <Arguments>-p $p -u $u -c $c $D %D</Arguments>
+   <Shortcut></Shortcut>
+  </Definition>
+  <Prompt>
+   <PromptText>Options:
+    -d, --dry-run
+    -k, --keep-files</PromptText>
+  </Prompt>
+  <Console>
+   <CloseOnExit>false</CloseOnExit>
+  </Console>
+  <AddToContext>true</AddToContext>
+ </CustomToolDef>
+</CustomToolDefList>

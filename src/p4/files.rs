@@ -17,13 +17,9 @@ pub struct Output {
 
 /// Runs `p4 -Mj -z tag files -e <depot-path>`
 pub fn run<S: AsRef<OsStr>>(options: &super::Options, depot_path: S) -> Vec<Output> {
-    let output = Command::new("p4")
-        .arg("-p")
-        .arg(&options.port)
-        .arg("-u")
-        .arg(&options.user)
-        .arg("-c")
-        .arg(&options.client)
+    let mut command = Command::new("p4");
+    options.append_args(&mut command);
+    let output = command
         .args(["-Mj", "-z", "tag", "files", "-e"])
         .arg(depot_path)
         .output() // TODO: Stream the output to reduce the amount of buffering
